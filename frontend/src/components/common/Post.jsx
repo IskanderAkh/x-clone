@@ -10,6 +10,7 @@ import { BsEmojiSmileFill } from "react-icons/bs";
 
 import LoadingSpinner from "./LoadingSpinner";
 import toast from "react-hot-toast";
+import { formatPostDate } from "../../utils/date";
 
 const Post = ({ post }) => {
 	const queryClient = useQueryClient();
@@ -59,13 +60,41 @@ const Post = ({ post }) => {
 			toast.error(error.message)
 		}
 	})
+
+	const { mutate: commentPost, isPending: isCommenting } = useMutation({
+		mutationFn: async () => {
+			try {
+
+				const res = await fetch(`/api/posts/comment/${post._id}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ text: comment })
+				})
+				const data = await res.json()
+
+				if (!res.ok) throw new Error(data.message || "Something went wrong")
+
+				return data
+			} catch (error) {
+				throw new Error(error);
+
+			}
+		},
+		onSuccess: () => {
+			toast.success("Comment added successfully")
+			setComment("")
+			queryClient.invalidateQueries({ queryKey: ["posts"] })
+		}
+
+	})
 	const postOwner = post.user;
 	const isLiked = post.likes.includes(authUser._id);
 	const isMyPost = authUser._id === post.user._id;
 
-	const formattedDate = "1h";
+	const formattedDate = formatPostDate(post.createdAt);
 
-	const isCommenting = false;
 
 	const handleDeletePost = () => {
 		deletePost()
@@ -73,6 +102,18 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if (isCommenting) return;
+
+		const trimmedComment = comment.trim();
+		if (!trimmedComment) {
+            toast.error("Comment text cannot be empty");
+			return;
+		}
+		if (/^\s+$/.test(trimmedComment)) {
+            toast.error("Comment text cannot be empty");
+			return;
+		}
+		commentPost();
 	};
 
 	const handleLikePost = () => {

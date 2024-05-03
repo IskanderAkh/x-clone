@@ -76,7 +76,7 @@ export const commentPost = async (req, res) => {
         if (!post) {
             return res.status(404).json({ message: "Post not found" })
         }
-
+        
         const comment = { user: userId, text }
         post.comments.push(comment)
         await post.save()
