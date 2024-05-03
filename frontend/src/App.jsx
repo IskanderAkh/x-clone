@@ -20,8 +20,6 @@ function App() {
 				const data = await res.json()
 				if(data.error) return null
 				if (!res.ok) throw new Error(data.message)
-				console.log("auth user is here: ", data);
-				// console.log(authUser);
 				return data
 			} catch (error) {
 				throw error
